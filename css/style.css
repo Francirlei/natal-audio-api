@@ -1,10 +1,15 @@
 @import './base.css';
 
 body {
-  background: black;
+  background: #212121;
   display: grid;
   min-height: 80vh;
   align-items: center;
+}
+
+.bg-light {
+  background-color: #fdffff;
+  transition: background-color .4s ease-in;
 }
 
 #tree {
@@ -20,12 +25,14 @@ body {
   font-size: 0.875rem;
   border-radius: 1px;
   cursor: pointer;
-  background: goldenrod;
+  /* background: #6a994e; */
+  background: #E1FEE7;
   display: flex;
   justify-content: center;
   align-items: center;
   transition: 0.3s;
   opacity: 0.5;
+  color: #141414
 }
 
 @keyframes blink {
@@ -35,10 +42,17 @@ body {
     opacity: 0.5;
   }
   50% {
-    background: gold;
+    color: #f4f0bb;
+    background: #226f54;
     opacity: 1;
-    box-shadow: inset 0 0 2px 4px gold;
+    box-shadow: inset 0 0 2px 4px #226f54;
   }
+}
+
+#tree li.tree-active {
+  color: #f4f0bb;
+  background: #226f54;
+  opacity: 1;
 }
 
 #tree li.blink {
@@ -104,7 +118,6 @@ button {
   display: block;
   font-size: 1rem;
   background: #555;
-  /* color: white; */
   border: 0px;
   border-radius: 2px;
   cursor: pointer;
@@ -132,12 +145,19 @@ button:active {
   overflow: hidden;
   width: 40px;
   height: 40px;
-  background-color: #555;
+  background-color: #f4f0bb;
+  transition: background-color .2s linear;
+}
+
+#play:hover,
+#stop:hover {
+  background-color: #EDE791;
+  outline: none;
 }
 
 #play:active,
 #stop:active {
-  background-color: #333;
+  background-color: #EDE791;
   outline: none;
 }
 
@@ -149,15 +169,57 @@ button:active {
   gap: 5px;
 }
 
-#footer {
+#alert-container {
   position: fixed;
-  bottom: 20px;
-  color: #888;
-  text-align: center;
-  width: 100%;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
 }
 
-#footer a {
-  color: #ccc;
-  text-decoration: none;
+.alert {
+  min-width: 280px;
+  max-width: 90vw;
+  margin-bottom: 10px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  color: #74121D;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  animation: slideIn 0.4s ease;
+}
+
+.alert.info    { background: #F4F0BB; }
+
+.alert button {
+  background: none;
+  border: none;
+  color: #74121D;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(120%); opacity: 0; }
+}
+
+@media (max-width: 600px) {
+  #alert-container {
+    right: 50%;
+    transform: translateX(50%);
+    top: 10px;
+  }
+
+  .alert {
+    width: 100%;
+  }
 }

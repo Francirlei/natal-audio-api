@@ -1,5 +1,7 @@
 import notes from './notes.js';
 
+let playing = false;
+
 const audioContext = (/** @type {AudioContext} */ context) => (frequency) => {
   const o = context.createOscillator();
   const g = context.createGain();
@@ -21,6 +23,8 @@ const audioContext = (/** @type {AudioContext} */ context) => (frequency) => {
 window.tID = [];
 
 function playSong(song) {
+  manualSound = [];
+
   const context = new (window.AudioContext || window.webkitAudioContext)();
   const playNote = audioContext(context);
   for (let i = 0; i < song.length; i++) {
@@ -28,12 +32,22 @@ function playSong(song) {
       playNote(notes[song[i][0]]);
       const li = document.querySelector(`[data-note="${song[i][0]}"]`);
       blink(li);
+      if ((i + 1) == song.length) {
+        playing = false;
+      }
     }, song[i][1]);
     window.tID.push(tID);
   }
 }
 
 document.getElementById('stop').addEventListener('click', () => {
+  playing = false;
+
+  removeSnow();
+  removeBgLight();
+  removeColorTree();
+  manualSound = [];
+
   const tID = window.tID || [];
   tID.forEach((id) => clearTimeout(id));
   window.tID = [];
@@ -47,6 +61,7 @@ function notesTime(song) {
     acc += time;
     songTimed.push([song[i][0], acc]);
   }
+
   return songTimed;
 }
 
@@ -99,6 +114,9 @@ const song = [
   ['C3', 4],
 ];
 
+let manualSound = [];
+let soundCompare = [];
+
 function blink(el) {
   setTimeout(() => el.classList.add('blink'));
   setTimeout(() => el.classList.remove('blink'), 400);
@@ -123,7 +141,110 @@ function makeTree(song) {
   });
 }
 
+function setSoundCompare() {
+  for (let s of song) {
+    soundCompare.push(s[0]);
+  }
+}
+
+setSoundCompare();
+
+function showAlert(message, type = 'info', duration = 5000) {
+  const container = document.getElementById('alert-container');
+
+  const alert = document.createElement('div');
+  alert.className = `alert ${type}`;
+  alert.innerHTML = `
+    <span>${message}</span>
+    <button>&times;</button>
+  `;
+
+  alert.querySelector('button').onclick = () => removeAlert(alert);
+
+  container.appendChild(alert);
+
+  setTimeout(() => removeAlert(alert), duration);
+}
+
+function removeAlert(alert) {
+  alert.style.animation = 'slideOut 0.4s ease forwards';
+  setTimeout(() => alert.remove(), 400);
+}
+
+
 makeTree(song);
 document
   .getElementById('play')
-  .addEventListener('click', () => playSong(notesTime(song)));
+  .addEventListener('click', () => {
+    if (!playing) {
+      playSong(notesTime(song))
+    }
+
+    playing = true;
+  } 
+);
+
+function addSnow() {
+  const script = document.createElement('script');
+  script.id = 'snowScript';
+  script.src = 'js/snow.js';
+  document.body.appendChild(script);
+}
+
+function removeSnow() {
+  const body = document.querySelector(".container");
+  const snow = document.getElementById('embedim--snow'); 
+
+  if (snow !== null) {
+    body.removeChild(snow);
+  }
+}
+
+function setBgLight() {
+  let body = document.querySelector(".container");
+
+  body.classList.add("bg-light");
+}
+
+function removeBgLight() {
+  let body = document.querySelector(".container");
+
+  body.classList.remove("bg-light");
+}
+
+function setColorTree() {
+  const lis = document.querySelectorAll('#tree li');
+
+  lis.forEach((l) => {
+    l.classList.add("tree-active");
+  });
+}
+
+function removeColorTree() {
+  const lis = document.querySelectorAll('#tree li');
+
+  lis.forEach((l) => {
+    l.classList.remove("tree-active");
+  });
+
+}
+
+document
+  .querySelectorAll("[data-note]")
+  .forEach((note) => {
+    note.addEventListener("click", (el) => {
+      manualSound.push(note.dataset.note);
+      
+      if (soundCompare.length === manualSound.length) {
+        if (JSON.stringify(soundCompare) === JSON.stringify(manualSound)) {
+          setBgLight();
+          setColorTree();
+          addSnow();
+        } else {
+          manualSound = [];
+          showAlert("🙁 Poxa... Não é esse o som, tente novamente!");
+        }
+      }
+    });
+  });
+
