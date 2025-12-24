@@ -2,43 +2,64 @@ import notes from './notes.js';
 
 let playing = false;
 
-const audioContext = (/** @type {AudioContext} */ context) => (frequency) => {
+let audioContextGlobal = null;
+
+function getAudioContext() {
+  if (!audioContextGlobal) {
+    audioContextGlobal = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  if (audioContextGlobal.state === 'suspended') {
+    audioContextGlobal.resume();
+  }
+
+  return audioContextGlobal;
+}
+
+const playOscillator = (context, frequency) => {
   const o = context.createOscillator();
   const g = context.createGain();
-  o.connect(g);
+
   o.type = 'sine';
   o.frequency.value = frequency;
+
   g.gain.value = 0.25;
+  o.connect(g);
   g.connect(context.destination);
-  g.gain.setValueAtTime(g.gain.value, context.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 2);
-  o.start(context.currentTime);
-  setTimeout(() => {
-    g.gain.setValueAtTime(g.gain.value, context.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.03);
-    o.stop();
-  }, 1200);
+
+  g.gain.setValueAtTime(0.25, context.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 1.2);
+
+  o.start();
+  o.stop(context.currentTime + 1.2);
 };
+
 
 window.tID = [];
 
 function playSong(song) {
   manualSound = [];
 
-  const context = new (window.AudioContext || window.webkitAudioContext)();
-  const playNote = audioContext(context);
+  const context = getAudioContext();
+
+  window.tID = [];
+
   for (let i = 0; i < song.length; i++) {
     const tID = setTimeout(() => {
-      playNote(notes[song[i][0]]);
+      playOscillator(context, notes[song[i][0]]);
+
       const li = document.querySelector(`[data-note="${song[i][0]}"]`);
       blink(li);
-      if ((i + 1) == song.length) {
+
+      if (i + 1 === song.length) {
         playing = false;
       }
     }, song[i][1]);
+
     window.tID.push(tID);
   }
 }
+
 
 document.getElementById('stop').addEventListener('click', () => {
   playing = false;
@@ -123,9 +144,8 @@ function blink(el) {
 }
 
 window.playGlobalNote = (frequency) => {
-  const context = new (window.AudioContext || window.webkitAudioContext)();
-  const playNote = audioContext(context);
-  playNote(frequency);
+  const context = getAudioContext();
+  playOscillator(context, frequency);
 };
 
 function makeTree(song) {
